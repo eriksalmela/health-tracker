@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daily Health">
+<title>Daily Health Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F4EF;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE8;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --text: #1A1714;
+  --text2: #6B6560;
+  --text3: #A09A94;
+  --green: #2D7D52;
+  --green-bg: #EBF5EF;
+  --amber: #B5610A;
+  --amber-bg: #FDF3E7;
+  --red: #C0392B;
+  --red-bg: #FDECEA;
+  --blue: #1A5F8A;
+  --blue-bg: #E8F2F9;
+  --accent: #2D7D52;
+  --mono: 'DM Mono', monospace;
+  --serif: 'Fraunces', Georgia, serif;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141210;
+    --surface: #1E1C19;
+    --surface2: #252320;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #F0EDE8;
+    --text2: #9B9590;
+    --text3: #5A5550;
+    --green: #4CAF78;
+    --green-bg: #1A2E22;
+    --amber: #E8924A;
+    --amber-bg: #2A1E10;
+    --red: #E05A4E;
+    --red-bg: #2A1210;
+    --blue: #5BA3D0;
+    --blue-bg: #0E1E2A;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+/* NAV */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0 8px; gap: 3px; background: none; border: none;
+  cursor: pointer; color: var(--text3); font-family: var(--mono);
+  font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+  transition: color 0.15s;
+}
+.tab-btn.active { color: var(--accent); }
+.tab-icon { font-size: 18px; line-height: 1; }
+
+/* PAGES */
+.page { display: none; padding: 0 0 1rem; }
+.page.active { display: block; }
+
+/* HEADER */
+.page-header {
+  padding: 1.25rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky; top: 0; z-index: 50;
+}
+.page-header h1 {
+  font-family: var(--serif); font-weight: 300; font-size: 22px;
+  letter-spacing: -0.02em; color: var(--text);
+}
+.page-header .sub {
+  font-size: 11px; color: var(--text3); margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+.date-pill {
+  display: inline-block; background: var(--surface2);
+  border-radius: 99px; padding: 3px 10px;
+  font-size: 11px; color: var(--text2); margin-top: 6px;
+  letter-spacing: 0.03em;
+}
+
+/* CARDS */
+.section-wrap { padding: 1rem 1rem 0; }
+.section-label {
+  font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 8px;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 12px;
+}
+.card-header {
+  padding: 12px 16px 10px; border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text2);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-header .dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0;
+}
+.card-header .dot.amber { background: var(--amber); }
+.card-header .dot.red { background: var(--red); }
+.card-header .dot.blue { background: var(--blue); }
+
+/* ROWS */
+.row {
+  display: flex; align-items: center; padding: 13px 16px;
+  border-bottom: 1px solid var(--border); gap: 12px; cursor: pointer;
+  transition: background 0.1s; user-select: none;
+}
+.row:last-child { border-bottom: none; }
+.row:active { background: var(--surface2); }
+.row-label { flex: 1; font-size: 14px; color: var(--text); letter-spacing: 0.01em; }
+.row-label.done { color: var(--text3); text-decoration: line-through; }
+
+/* CHECKBOX */
+.chk {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--border2); display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all 0.15s;
+}
+.chk.on { background: var(--green); border-color: var(--green); }
+.chk svg { display: none; }
+.chk.on svg { display: block; }
+
+/* SCALE SELECTOR */
+.scale-row {
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.scale-row:last-child { border-bottom: none; }
+.scale-row .scale-label { font-size: 14px; color: var(--text); letter-spacing: 0.01em; }
+.scale-opts { display: flex; gap: 6px; flex-wrap: wrap; }
+.scale-opt {
+  padding: 4px 10px; border-radius: 99px; font-size: 11px; font-family: var(--mono);
+  border: 1px solid var(--border2); background: none; cursor: pointer; color: var(--text2);
+  letter-spacing: 0.03em; transition: all 0.15s;
+}
+.scale-opt.sel-green { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.scale-opt.sel-amber { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+.scale-opt.sel-red { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+
+/* STARS */
+.stars-row {
+  padding: 13px 16px; display: flex; align-items: center; gap: 12px;
+}
+.stars-row .row-label { font-size: 14px; color: var(--text); flex: 1; }
+.stars { display: flex; gap: 3px; }
+.star-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 22px; line-height: 1; color: var(--border2); transition: color 0.1s; padding: 0;
+}
+.star-btn.lit { color: var(--amber); }
+
+/* PROGRESS */
+.prog-wrap { padding: 10px 16px 12px; }
+.prog-track { background: var(--surface2); border-radius: 99px; height: 5px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 99px; background: var(--green); transition: width 0.35s cubic-bezier(.4,0,.2,1); }
+.prog-text { font-size: 11px; color: var(--text3); margin-top: 5px; text-align: right; letter-spacing: 0.03em; }
+
+/* BP / WEIGHT BANNER */
+.banner {
+  margin: 1rem 1rem 0;
+  padding: 14px 16px; border-radius: var(--radius);
+  border: 1px solid; display: flex; align-items: flex-start; gap: 12px;
+}
+.banner.info { background: var(--blue-bg); border-color: var(--blue); color: var(--blue); }
+.banner.success { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.banner-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.banner-body { flex: 1; }
+.banner-title { font-size: 13px; font-weight: 500; letter-spacing: 0.03em; }
+.banner-sub { font-size: 11px; opacity: 0.75; margin-top: 3px; line-height: 1.4; }
+
+/* WEEK CALENDAR */
+.week-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+  padding: 12px 16px;
+}
+.wday {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.wday-name { font-size: 9px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; }
+.wday-dot {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500; color: var(--text3);
+  background: var(--surface2);
+}
+.wday-dot.today { border: 2px solid var(--green); color: var(--text); }
+.wday-dot.great { background: var(--green-bg); color: var(--green); }
+.wday-dot.ok { background: var(--amber-bg); color: var(--amber); }
+.wday-dot.rough { background: var(--red-bg); color: var(--red); }
+
+/* NOTIFICATIONS PAGE */
+.notif-row {
+  display: flex; align-items: center; padding: 14px 16px;
+  border-bottom: 1px solid var(--border); gap: 12px;
+}
+.notif-row:last-child { border-bottom: none; }
+.notif-info { flex: 1; }
+.notif-title { font-size: 14px; color: var(--text); }
+.notif-time { font-size: 11px; color: var(--text3); margin-top: 2px; letter-spacing: 0.03em; }
+.toggle {
+  width: 44px; height: 26px; border-radius: 13px; border: none; cursor: pointer;
+  position: relative; transition: background 0.2s; flex-shrink: 0;
+  background: var(--border2);
+}
+.toggle.on { background: var(--green); }
+.toggle::after {
+  content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%;
+  background: white; top: 3px; left: 3px; transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on::after { transform: translateX(18px); }
+
+/* INSTALL BANNER */
+.install-card {
+  margin: 1rem 1rem 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+}
+.install-card h3 {
+  font-family: var(--serif); font-weight: 300; font-size: 18px; margin-bottom: 8px;
+}
+.install-steps { list-style: none; counter-reset: steps; }
+.install-steps li {
+  counter-increment: steps; padding: 6px 0 6px 28px; position: relative;
+  font-size: 13px; color: var(--text2); line-height: 1.5; border-bottom: 1px solid var(--border);
+}
+.install-steps li:last-child { border-bottom: none; }
+.install-steps li::before {
+  content: counter(steps); position: absolute; left: 0; top: 6px;
+  width: 18px; height: 18px; border-radius: 50%; background: var(--surface2);
+  font-size: 10px; display: flex; align-items: center; justify-content: center;
+  font-weight: 500; color: var(--text3);
+}
+.notif-status {
+  margin: 1rem 1rem 0;
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  font-size: 13px; border: 1px solid;
+}
+.notif-status.blocked { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+.notif-status.granted { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.notif-status.default { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+.req-btn {
+  display: block; width: calc(100% - 2rem); margin: 12px 1rem 0;
+  padding: 13px; border-radius: var(--radius-sm);
+  background: var(--green); color: white; border: none;
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  letter-spacing: 0.05em; cursor: pointer; text-align: center;
+}
+
+/* SYMPTOM HISTORY */
+.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.history-table th {
+  font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text3); font-weight: 500; padding: 8px 12px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.history-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  color: var(--text2); vertical-align: top;
+}
+.history-table tr:last-child td { border-bottom: none; }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 99px;
+  font-size: 10px; letter-spacing: 0.04em; margin: 1px;
+}
+.badge.g { background: var(--green-bg); color: var(--green); }
+.badge.a { background: var(--amber-bg); color: var(--amber); }
+.badge.r { background: var(--red-bg); color: var(--red); }
+
+/* FLARE SECTION */
+.flare-note {
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.flare-note:last-child { border-bottom: none; }
+.flare-note label { font-size: 12px; color: var(--text3); letter-spacing: 0.04em; }
+.flare-note textarea {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 10px;
+  font-family: var(--mono); font-size: 13px; color: var(--text);
+  resize: none; min-height: 60px; line-height: 1.5;
+}
+.flare-note textarea:focus { outline: none; border-color: var(--border2); }
+</style>
+</head>
+<body>
+
+<!-- TAB BAR -->
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="showPage('today')" id="tab-today">
+    <span class="tab-icon">◎</span>Today
+  </button>
+  <button class="tab-btn" onclick="showPage('symptoms')" id="tab-symptoms">
+    <span class="tab-icon">◈</span>Symptoms
+  </button>
+  <button class="tab-btn" onclick="showPage('history')" id="tab-history">
+    <span class="tab-icon">◷</span>History
+  </button>
+  <button class="tab-btn" onclick="showPage('alerts')" id="tab-alerts">
+    <span class="tab-icon">◑</span>Alerts
+  </button>
+</nav>
+
+<!-- TODAY PAGE -->
+<div class="page active" id="page-today">
+  <div class="page-header">
+    <h1>Daily Check-in</h1>
+    <div class="date-pill" id="todayDate"></div>
+  </div>
+
+  <!-- BP/Weight banner injected here if Mon/Thu -->
+  <div id="bpBanner"></div>
+
+  <!-- MORNING -->
+  <div class="section-wrap">
+    <div class="section-label">Morning</div>
+    <div class="card">
+      <div class="card-header"><div class="dot"></div> Morning routine</div>
+      <div class="row" onclick="tog('meds-am')">
+        <div class="chk" id="cb-meds-am"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-meds-am">Morning meds</span>
+        <span style="font-size:10px;color:var(--text3);letter-spacing:.03em">Colchocine · Omega3 · Vit D · Multi · Psyllium · Amlodipine</span>
+      </div>
+      <div class="row" onclick="tog('workout')">
+        <div class="chk" id="cb-workout"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-workout">Weights + cardio (~2pm)</span>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-track"><div class="prog-fill" id="prog-morning" style="width:0%"></div></div>
+        <div class="prog-text" id="prog-morning-txt">0 / 2</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENING -->
+  <div class="section-wrap">
+    <div class="section-label">Evening</div>
+    <div class="card">
+      <div class="card-header"><div class="dot amber"></div> Evening routine</div>
+      <div class="row" onclick="tog('meds-pm')">
+        <div class="chk" id="cb-meds-pm"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-meds-pm">Evening meds</span>
+        <span style="font-size:10px;color:var(--text3);letter-spacing:.03em">Colchocine · Immunotone · RYR Synergy</span>
+      </div>
+      <div class="row" onclick="tog('alcohol')">
+        <div class="chk" id="cb-alcohol"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-alcohol">Alcohol-free evening</span>
+      </div>
+      <div class="row" onclick="tog('snack')">
+        <div class="chk" id="cb-snack"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-snack">No late-night snacking</span>
+      </div>
+      <div class="row" onclick="tog('sleep')">
+        <div class="chk" id="cb-sleep"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-sleep">Good sleep last night</span>
+      </div>
+      <div class="stars-row">
+        <span class="row-label">Mood / energy</span>
+        <div class="stars" id="starsEl">
+          <button class="star-btn" onclick="setStar(1)">★</button>
+          <button class="star-btn" onclick="setStar(2)">★</button>
+          <button class="star-btn" onclick="setStar(3)">★</button>
+          <button class="star-btn" onclick="setStar(4)">★</button>
+          <button class="star-btn" onclick="setStar(5)">★</button>
+        </div>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-track"><div class="prog-fill" id="prog-evening" style="width:0%"></div></div>
+        <div class="prog-text" id="prog-evening-txt">0 / 4</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEEK -->
+  <div class="section-wrap">
+    <div class="section-label">This week</div>
+    <div class="card">
+      <div class="week-grid" id="weekGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SYMPTOMS PAGE -->
+<div class="page" id="page-symptoms">
+  <div class="page-header">
+    <h1>Symptom Log</h1>
+    <div class="date-pill" id="sympDate"></div>
+  </div>
+
+  <div class="section-wrap">
+    <div class="section-label">GI symptoms</div>
+    <div class="card">
+      <div class="card-header"><div class="dot red"></div> Gastrointestinal</div>
+      <div class="row" onclick="tog('constipation')">
+        <div class="chk" id="cb-constipation"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-constipation">Constipation</span>
+      </div>
+      <div class="row" onclick="tog('stomachache')">
+        <div class="chk" id="cb-stomachache"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-stomachache">Stomach ache</span>
+      </div>
+      <div class="row" onclick="tog('stomachpain')">
+        <div class="chk" id="cb-stomachpain"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-stomachpain">Stomach pain</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-wrap">
+    <div class="section-label">Pain</div>
+    <div class="card">
+      <div class="card-header"><div class="dot red"></div> Pain tracker</div>
+      <div class="row" onclick="tog('organpain')">
+        <div class="chk" id="cb-organpain"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-organpain">Organ pain</span>
+      </div>
+      <div class="row" onclick="tog('jointpain')">
+        <div class="chk" id="cb-jointpain"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-jointpain">Joint pain</span>
+      </div>
+      <div class="row" onclick="tog('muscleache')">
+        <div class="chk" id="cb-muscleache"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-muscleache">Muscle ache</span>
+      </div>
+      <div class="row" onclick="tog('headache')">
+        <div class="chk" id="cb-headache"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="row-label" id="lbl-headache">Headache</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-wrap">
+    <div class="section-label">Fever level</div>
+    <div class="card">
+      <div class="card-header"><div class="dot amber"></div> Temperature</div>
+      <div class="scale-row">
+        <div class="scale-label">Fever today</div>
+        <div class="scale-opts" id="fever-opts">
+          <button class="scale-opt" onclick="setScale('fever','Normal','green')">Normal</button>
+          <button class="scale-opt" onclick="setScale('fever','Slight 99–100','green')">Slight 99–100</button>
+          <button class="scale-opt" onclick="setScale('fever','Low 100–101','amber')">Low 100–101</button>
+          <button class="scale-opt" onclick="setScale('fever','High 101–102','amber')">High 101–102</button>
+          <button class="scale-opt" onclick="setScale('fever','Very High 102+','red')">Very High 102+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-wrap">
+    <div class="section-label">Fatigue level</div>
+    <div class="card">
+      <div class="card-header"><div class="dot blue"></div> Energy</div>
+      <div class="scale-row">
+        <div class="scale-label">Fatigue today</div>
+        <div class="scale-opts" id="fatigue-opts">
+          <button class="scale-opt" onclick="setScale('fatigue','None','green')">None</button>
+          <button class="scale-opt" onclick="setScale('fatigue','Mild','green')">Mild</button>
+          <button class="scale-opt" onclick="setScale('fatigue','Moderate','amber')">Moderate</button>
+          <button class="scale-opt" onclick="setScale('fatigue','Severe','red')">Severe</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-wrap">
+    <div class="section-label">Notes (optional)</div>
+    <div class="card">
+      <div class="flare-note">
+        <label>Flare notes / anything else to record</label>
+        <textarea id="flareNote" placeholder="e.g. woke up with stiff joints, took Tylenol at noon..." rows="3" oninput="saveNote()"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div class="page" id="page-history">
+  <div class="page-header">
+    <h1>History</h1>
+    <div class="sub">Last 14 days</div>
+  </div>
+  <div class="section-wrap">
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table class="history-table" id="histTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Habits</th>
+              <th>Symptoms</th>
+              <th>Fever</th>
+              <th>Fatigue</th>
+              <th>Mood</th>
+            </tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTS PAGE -->
+<div class="page" id="page-alerts">
+  <div class="page-header">
+    <h1>Reminders</h1>
+    <div class="sub">Quiet hours: 10pm – 9am</div>
+  </div>
+
+  <div id="notifStatus" class="notif-status default" style="display:none"></div>
+  <button class="req-btn" id="reqBtn" onclick="requestNotifs()" style="display:none">Enable notifications</button>
+
+  <div class="install-card">
+    <h3>Add to home screen</h3>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">Required for notifications to work on iPhone. Takes 10 seconds.</p>
+    <ol class="install-steps">
+      <li>Open this page in <strong>Safari</strong> (not Chrome)</li>
+      <li>Tap the <strong>Share</strong> button at the bottom of Safari</li>
+      <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+      <li>Tap <strong>Add</strong> — done! Open the app from your home screen</li>
+      <li>Come back to Alerts and tap <strong>Enable notifications</strong></li>
+    </ol>
+  </div>
+
+  <div class="section-wrap" style="margin-top:1rem">
+    <div class="section-label">Notification toggles</div>
+    <div class="card">
+      <div id="notifToggles"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────
+const STORE_KEY = 'ht_v2';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch(e){}
+
+const todayKey = () => new Date().toISOString().slice(0,10);
+
+function getDay(key) {
+  if (!state[key]) state[key] = { habits:{}, scales:{}, note:'', stars:0 };
+  return state[key];
+}
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+// ── TOGGLE CHECKBOX ────────────────────────────────────────────────────
+function tog(id) {
+  const d = getDay(todayKey());
+  d.habits[id] = !d.habits[id];
+  save();
+  applyAll();
+}
+
+function applyAll() {
+  const d = getDay(todayKey());
+  const keys = ['meds-am','workout','meds-pm','alcohol','snack','sleep',
+                 'constipation','stomachache','stomachpain','organpain','jointpain','muscleache','headache'];
+  keys.forEach(k => {
+    const cb = document.getElementById('cb-'+k);
+    const lbl = document.getElementById('lbl-'+k);
+    if (!cb) return;
+    if (d.habits[k]) { cb.classList.add('on'); if(lbl) lbl.classList.add('done'); }
+    else { cb.classList.remove('on'); if(lbl) lbl.classList.remove('done'); }
+  });
+  updateProgress();
+  buildWeek();
+  renderStars(d.stars || 0);
+  // restore scales
+  ['fever','fatigue'].forEach(s => {
+    if (d.scales[s]) setScaleUI(s, d.scales[s].val, d.scales[s].color);
+  });
+  // restore note
+  const ta = document.getElementById('flareNote');
+  if (ta) ta.value = d.note || '';
+}
+
+// ── PROGRESS ───────────────────────────────────────────────────────────
+function updateProgress() {
+  const d = getDay(todayKey());
+  const mKeys = ['meds-am','workout'];
+  const eKeys = ['meds-pm','alcohol','snack','sleep'];
+  const mc = mKeys.filter(k => d.habits[k]).length;
+  const ec = eKeys.filter(k => d.habits[k]).length;
+  document.getElementById('prog-morning').style.width = (mc/2*100)+'%';
+  document.getElementById('prog-morning-txt').textContent = mc+' / 2';
+  document.getElementById('prog-evening').style.width = (ec/4*100)+'%';
+  document.getElementById('prog-evening-txt').textContent = ec+' / 4';
+}
+
+// ── STARS ──────────────────────────────────────────────────────────────
+function setStar(n) {
+  const d = getDay(todayKey());
+  d.stars = n; save();
+  renderStars(n);
+}
+function renderStars(n) {
+  document.querySelectorAll('#starsEl .star-btn').forEach((s,i) => {
+    i < n ? s.classList.add('lit') : s.classList.remove('lit');
+  });
+}
+
+// ── SCALES ─────────────────────────────────────────────────────────────
+function setScale(type, val, color) {
+  const d = getDay(todayKey());
+  d.scales[type] = { val, color }; save();
+  setScaleUI(type, val, color);
+}
+function setScaleUI(type, val, color) {
+  const opts = document.querySelectorAll('#'+type+'-opts .scale-opt');
+  opts.forEach(o => { o.className = 'scale-opt'; });
+  opts.forEach(o => { if(o.textContent === val) o.classList.add('sel-'+color); });
+}
+
+// ── NOTE ───────────────────────────────────────────────────────────────
+function saveNote() {
+  const d = getDay(todayKey());
+  d.note = document.getElementById('flareNote').value;
+  save();
+}
+
+// ── WEEK GRID ──────────────────────────────────────────────────────────
+function buildWeek() {
+  const grid = document.getElementById('weekGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const today = new Date();
+  const dow = today.getDay();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - dow + i);
+    const key = d.toISOString().slice(0,10);
+    const isFuture = d > today;
+    const isToday = key === todayKey();
+    const data = state[key] || {};
+    const allHabits = ['meds-am','workout','meds-pm','alcohol','snack','sleep'];
+    const done = allHabits.filter(k => data.habits && data.habits[k]).length;
+    const pct = done / 6;
+    let cls = 'wday-dot';
+    if (isToday) cls += ' today';
+    else if (!isFuture && done > 0) cls += pct >= 0.8 ? ' great' : pct >= 0.5 ? ' ok' : ' rough';
+    const cell = document.createElement('div');
+    cell.className = 'wday';
+    cell.innerHTML = `<div class="wday-name">${days[d.getDay()]}</div><div class="${cls}">${d.getDate()}</div>`;
+    grid.appendChild(cell);
+  }
+}
+
+// ── BP/WEIGHT BANNER ───────────────────────────────────────────────────
+function buildBpBanner() {
+  const banner = document.getElementById('bpBanner');
+  if (!banner) return;
+  const day = new Date().getDay(); // 0=Sun,1=Mon,...,4=Thu
+  if (day === 1 || day === 4) {
+    const d = getDay(todayKey());
+    const done = d.habits['bp-done'];
+    banner.innerHTML = `<div class="banner ${done?'success':'info'}">
+      <div class="banner-icon">${done?'✓':'○'}</div>
+      <div class="banner-body">
+        <div class="banner-title">${done?'BP & weight logged!':'BP & weight check day'}</div>
+        <div class="banner-sub">${done?'Nice work.':'Log your blood pressure, BPM, and weight today (Mon/Thu).'}</div>
+      </div>
+      ${!done ? `<button onclick="markBP()" style="background:var(--blue);color:white;border:none;border-radius:var(--radius-sm);padding:6px 12px;font-family:var(--mono);font-size:11px;cursor:pointer;white-space:nowrap">Mark done</button>` : ''}
+    </div>`;
+  }
+}
+function markBP() {
+  const d = getDay(todayKey());
+  d.habits['bp-done'] = true; save();
+  buildBpBanner();
+}
+
+// ── HISTORY ────────────────────────────────────────────────────────────
+function buildHistory() {
+  const tbody = document.getElementById('histBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const syms = ['constipation','stomachache','stomachpain','organpain','jointpain','muscleache','headache'];
+  const symLabels = { constipation:'Constipation', stomachache:'Stomach ache', stomachpain:'Stomach pain',
+    organpain:'Organ pain', jointpain:'Joint pain', muscleache:'Muscle ache', headache:'Headache' };
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    const data = state[key] || { habits:{}, scales:{}, stars:0 };
+    const habCount = ['meds-am','workout','meds-pm','alcohol','snack','sleep'].filter(k=>data.habits&&data.habits[k]).length;
+    const presentSyms = syms.filter(k=>data.habits&&data.habits[k]);
+    const fever = data.scales && data.scales.fever ? data.scales.fever : null;
+    const fatigue = data.scales && data.scales.fatigue ? data.scales.fatigue : null;
+    const label = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const isToday = key === todayKey();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="white-space:nowrap;color:var(--text);font-weight:${isToday?'500':'400'}">${label}${isToday?' <span style="font-size:10px;color:var(--green)">today</span>':''}</td>
+      <td>${habCount}/6</td>
+      <td>${presentSyms.length ? presentSyms.map(s=>`<span class="badge r">${symLabels[s]}</span>`).join('') : '<span style="color:var(--text3);font-size:11px">none</span>'}</td>
+      <td>${fever ? `<span class="badge ${fever.color==='red'?'r':fever.color==='amber'?'a':'g'}">${fever.val}</span>` : '—'}</td>
+      <td>${fatigue ? `<span class="badge ${fatigue.color==='red'?'r':fatigue.color==='amber'?'a':'g'}">${fatigue.val}</span>` : '—'}</td>
+      <td>${data.stars ? '★'.repeat(data.stars) : '—'}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────────────────────────
+const NOTIF_KEY = 'ht_notifs';
+const defaultToggles = {
+  'meds-am': { label:'Morning meds', time:'09:00', on:true },
+  'workout':  { label:'Workout reminder', time:'13:30', on:true },
+  'alcohol':  { label:'Alcohol-free reminder', time:'17:00', on:true },
+  'meds-pm':  { label:'Evening meds', time:'20:00', on:true },
+  'bp':       { label:'BP & weight check (Mon/Thu)', time:'10:00', on:true },
+};
+let notifPrefs = {};
+try { notifPrefs = JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}'); } catch(e){}
+Object.keys(defaultToggles).forEach(k => {
+  if (!notifPrefs[k]) notifPrefs[k] = { ...defaultToggles[k] };
+});
+
+function saveNotifPrefs() { localStorage.setItem(NOTIF_KEY, JSON.stringify(notifPrefs)); }
+
+function buildNotifToggles() {
+  const wrap = document.getElementById('notifToggles');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  Object.keys(notifPrefs).forEach(k => {
+    const p = notifPrefs[k];
+    const row = document.createElement('div');
+    row.className = 'notif-row';
+    row.innerHTML = `
+      <div class="notif-info">
+        <div class="notif-title">${p.label}</div>
+        <div class="notif-time">${fmtTime(p.time)} · quiet 10pm–9am</div>
+      </div>
+      <button class="toggle ${p.on?'on':''}" id="tog-${k}" onclick="toggleNotif('${k}')"></button>`;
+    wrap.appendChild(row);
+  });
+}
+function fmtTime(t) {
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'pm' : 'am';
+  return `${h%12||12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+function toggleNotif(k) {
+  notifPrefs[k].on = !notifPrefs[k].on;
+  saveNotifPrefs();
+  buildNotifToggles();
+  scheduleAll();
+}
+
+function checkNotifStatus() {
+  const el = document.getElementById('notifStatus');
+  const btn = document.getElementById('reqBtn');
+  if (!('Notification' in window)) {
+    if(el){ el.style.display='block'; el.textContent='Notifications not supported in this browser. Use Safari on iPhone.'; el.className='notif-status blocked'; }
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    if(el){ el.style.display='block'; el.className='notif-status granted'; el.textContent='✓ Notifications are enabled'; }
+    if(btn) btn.style.display='none';
+    scheduleAll();
+  } else if (Notification.permission === 'denied') {
+    if(el){ el.style.display='block'; el.className='notif-status blocked'; el.textContent='Notifications blocked. Go to Settings → Safari → Notifications to allow.'; }
+    if(btn) btn.style.display='none';
+  } else {
+    if(el){ el.style.display='block'; el.className='notif-status default'; el.textContent='Tap below to enable notifications'; }
+    if(btn) btn.style.display='block';
+  }
+}
+function requestNotifs() {
+  Notification.requestPermission().then(() => checkNotifStatus());
+}
+
+// Simple scheduler: uses setTimeout to fire a notification at the next occurrence of each time
+const scheduledTimers = {};
+function scheduleAll() {
+  Object.values(scheduledTimers).forEach(clearTimeout);
+  if (Notification.permission !== 'granted') return;
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  Object.keys(notifPrefs).forEach(k => {
+    const p = notifPrefs[k];
+    if (!p.on) return;
+    // BP only on Mon(1) and Thu(4)
+    if (k === 'bp' && dayOfWeek !== 1 && dayOfWeek !== 4) return;
+    const [h, m] = p.time.split(':').map(Number);
+    // Quiet hours: 10pm(22) - 9am(9)
+    if (h >= 22 || h < 9) return;
+    const fire = new Date(now);
+    fire.setHours(h, m, 0, 0);
+    if (fire <= now) fire.setDate(fire.getDate() + 1);
+    const ms = fire - now;
+    scheduledTimers[k] = setTimeout(() => {
+      new Notification('Daily Health', { body: p.label, icon: '' });
+    }, ms);
+  });
+}
+
+// ── DATES ──────────────────────────────────────────────────────────────
+function setDates() {
+  const opts = { weekday:'long', month:'long', day:'numeric' };
+  const str = new Date().toLocaleDateString('en-US', opts);
+  ['todayDate','sympDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = str;
+  });
+}
+
+// ── PAGES ──────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'history') buildHistory();
+  if (name === 'alerts') { checkNotifStatus(); buildNotifToggles(); }
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+setDates();
+applyAll();
+buildBpBanner();
+buildWeek();
+scheduleAll();
+</script>
+</body>
+</html>
