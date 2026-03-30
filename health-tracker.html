@@ -573,6 +573,46 @@ body {
   <div style="height:4px"></div>
 </div>
 
+<!-- ══════════════════════════════ IMPORT PAGE -->
+<div class="page" id="page-import">
+  <div class="pg-head">
+    <div class="pg-title">Import data</div>
+    <div class="pg-date">Paste JSON from Claude</div>
+  </div>
+  <div class="sec" style="margin-top:16px">
+    <div class="sec-label">How it works</div>
+    <div class="card">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.7">
+        1. On your computer, open the import file from Claude<br>
+        2. Select all text (Cmd+A) and copy (Cmd+C)<br>
+        3. Paste it in the box below and tap Import
+      </div>
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+        <textarea id="importInput" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-family:var(--sans);font-size:13px;color:var(--text);resize:none;outline:none;line-height:1.5;min-height:140px" placeholder="Paste JSON data here..."></textarea>
+      </div>
+      <div style="padding:12px 16px;display:flex;gap:10px">
+        <button onclick="runImport()" style="flex:1;padding:13px;border-radius:var(--r-sm);background:var(--green);border:none;color:white;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer">Import data</button>
+        <button onclick="document.getElementById('importInput').value='';document.getElementById('importResult').style.display='none'" style="padding:13px 16px;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:var(--sans);font-size:13px;cursor:pointer">Clear</button>
+      </div>
+      <div id="importResult" style="display:none;padding:12px 16px;border-top:1px solid var(--border);font-size:14px;font-weight:500;font-family:var(--sans)"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-label">Export / backup</div>
+    <div class="card">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.6">Back up all your data. Copy the text and save it in Notes or email it to yourself.</div>
+      <div style="padding:12px 16px">
+        <button onclick="doExport()" style="width:100%;padding:13px;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer">Export all data</button>
+      </div>
+      <div id="exportOut" style="display:none;padding:0 16px 14px">
+        <textarea id="exportText" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-family:var(--sans);font-size:11px;color:var(--text2);resize:none;outline:none;line-height:1.5;min-height:80px" readonly></textarea>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Select all and copy, then paste into Notes or an email.</div>
+      </div>
+    </div>
+  </div>
+  <div style="height:8px"></div>
+</div>
+
 </div>
 </div>
 
@@ -586,6 +626,9 @@ body {
   </button>
   <button class="tab-btn" onclick="showPage('alerts')" id="tab-alerts">
     <div class="tab-icon">◔</div>Alerts
+  </button>
+  <button class="tab-btn" onclick="showPage('import')" id="tab-import">
+    <div class="tab-icon">⊕</div>Import
   </button>
 </nav>
 
@@ -1278,6 +1321,41 @@ function buildFlareBanner() {
 // ══════════════════════════════════════════════════════════
 refreshAll();
 scheduleAll();
+
+function runImport() {
+  const raw = document.getElementById('importInput').value.trim();
+  const result = document.getElementById('importResult');
+  result.style.display = 'block';
+  if (!raw) { result.style.color='var(--red)'; result.textContent='Nothing to import.'; return; }
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch(e) {
+    result.style.color='var(--red)';
+    result.textContent='Invalid format — make sure you copied the full JSON from Claude.';
+    return;
+  }
+  let count = 0;
+  const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+  Object.keys(parsed).forEach(k => {
+    if (!dateRe.test(k)) return;
+    db[k] = Object.assign(getDay(k), parsed[k]);
+    count++;
+  });
+  save();
+  buildWeek();
+  updateHero();
+  buildFlareBanner();
+  result.style.color='var(--green)';
+  result.textContent = count + ' days imported successfully!';
+}
+
+function doExport() {
+  const out = document.getElementById('exportOut');
+  const txt = document.getElementById('exportText');
+  out.style.display = 'block';
+  txt.value = JSON.stringify(db, null, 2);
+  txt.select();
+}
+
 </script>
 </body>
 </html>
